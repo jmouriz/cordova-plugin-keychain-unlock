@@ -1,0 +1,38 @@
+{
+  "name": "cordova-plugin-keychain-unlock",
+  "version": "1.0.0",
+  "description": "A biometric with password, pin or pattern fallback keychain unlock for Apache Cordova thats runs on Android and iOS",
+  "cordova": {
+    "id": "cordova-plugin-keychain-unlock",
+    "platforms": [
+      "ios"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmouriz/cordova-plugin-keychain-unlock.git"
+  },
+  "keywords": [
+    "TouchID",
+    "Touch ID",
+    "Face ID",
+    "iPhone X",
+    "Fingerprint",
+    "Biometric",
+    "Scanner",
+    "ecosystem:cordova",
+    "cordova-ios"
+  ],
+  "engines": [
+    {
+      "name": "cordova",
+      "version": ">=3.0.0"
+    }
+  ],
+  "author": "Juan Manuel Mouriz <jmouriz@gmail.com> (https://github.com/jmouriz)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jmouriz/cordova-plugin-keychain-unlock/issues"
+  },
+  "homepage": "https://github.com/jmouriz/cordova-keychain-unlock#readme"
+}
