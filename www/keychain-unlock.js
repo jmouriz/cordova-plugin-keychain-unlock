@@ -1,14 +1,14 @@
 var argscheck = require('cordova/argscheck'),
     exec = require('cordova/exec'),
     KeychainUnlock = {
-    isAvailable: function(successCallback, errorCallback){
+    available: function(successCallback, errorCallback){
         exec(successCallback, errorCallback, "TouchID", "isAvailable", []);
     },
     save: function(key,password, userAuthenticationRequired, successCallback, errorCallback) {
         exec(successCallback, errorCallback, "TouchID", "save", [key,password, userAuthenticationRequired]);
     },
-    verify: function(key,message,successCallback, errorCallback){
-        exec(successCallback, errorCallback, "TouchID", "verify", [key,message]);
+    verify: function(key,message,label,successCallback, errorCallback){
+        exec(successCallback, errorCallback, "TouchID", "verify", [key,message,label]);
     },
     has: function(key,successCallback, errorCallback){
         exec(successCallback, errorCallback, "TouchID", "has", [key]);
@@ -21,6 +21,9 @@ var argscheck = require('cordova/argscheck'),
     },
     move: function(key, packageName,successCallback, errorCallback){
         exec(successCallback, errorCallback, "TouchID", "move", [key,packageName]);
+    }
+    password: function(message,packageName,successCallback, errorCallback){
+        exec(successCallback, errorCallback, "TouchID", "askPassword", [message,packageName]);
     }
 };
 
