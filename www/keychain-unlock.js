@@ -21,7 +21,7 @@ var argscheck = require('cordova/argscheck'),
     },
     move: function(key, packageName,successCallback, errorCallback){
         exec(successCallback, errorCallback, "TouchID", "move", [key,packageName]);
-    }
+    },
     password: function(message,packageName,successCallback, errorCallback){
         exec(successCallback, errorCallback, "TouchID", "askPassword", [message,packageName]);
     }
