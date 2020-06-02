@@ -24,27 +24,17 @@
 #import <Cordova/CDVPlugin.h>
 #import <LocalAuthentication/LocalAuthentication.h>
 
-//@interface TouchID :CDVPlugin
-@interface TouchID : CDVPlugin {}
+@interface KeychainUnlock : CDVPlugin {}
 
-@property (strong,nonatomic)NSString* TAG;
-@property (strong, nonatomic) KeychainWrapper* MyKeychainWrapper;
-@property (strong, nonatomic) LAContext* laContext;
+@property (strong,nonatomic)NSString* tag;
+@property (strong, nonatomic) KeychainWrapper* wrapper;
+@property (strong, nonatomic) LAContext* context;
 
-- (void) isAvailable:(CDVInvokedUrlCommand*)command;
-
-- (void) didFingerprintDatabaseChange:(CDVInvokedUrlCommand*)command;
-
-//- (void) verifyFingerprint:(CDVInvokedUrlCommand*)command;
-//- (void) verifyFingerprintWithCustomPasswordFallback:(CDVInvokedUrlCommand*)command;
-//- (void) verifyFingerprintWithCustomPasswordFallbackAndEnterPasswordLabel:(CDVInvokedUrlCommand*)command;
-
-- (void) askPassword:(CDVInvokedUrlCommand*)command;
-
+- (void) available:(CDVInvokedUrlCommand*)command;
+- (void) update:(CDVInvokedUrlCommand*)command;
 - (void) has:(CDVInvokedUrlCommand*)command;
 - (void) save:(CDVInvokedUrlCommand*)command;
 - (void) verify:(CDVInvokedUrlCommand*)command;
 - (void) delete:(CDVInvokedUrlCommand*)command;
-- (void) setLocale:(CDVInvokedUrlCommand*)command;
 
 @end

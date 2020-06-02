@@ -1,29 +1,20 @@
 var argscheck = require('cordova/argscheck'),
     exec = require('cordova/exec'),
     KeychainUnlock = {
-    available: function(successCallback, errorCallback){
-        exec(successCallback, errorCallback, "TouchID", "isAvailable", []);
+    available: function(success, error) {
+        exec(success, error, 'KeychainUnlock', 'available', []);
     },
-    save: function(key,password, userAuthenticationRequired, successCallback, errorCallback) {
-        exec(successCallback, errorCallback, "TouchID", "save", [key,password, userAuthenticationRequired]);
+    save: function(key, password, success, error) {
+        exec(success, error, 'KeychainUnlock', 'save', [key, password]);
     },
-    verify: function(key,message,label,successCallback, errorCallback){
-        exec(successCallback, errorCallback, "TouchID", "verify", [key,message,label]);
+    verify: function(key, message, success, error) {
+        exec(success, error, 'KeychainUnlock', 'verify', [key, message]);
     },
-    has: function(key,successCallback, errorCallback){
-        exec(successCallback, errorCallback, "TouchID", "has", [key]);
+    has: function(key, success, error) {
+        exec(success, error, 'KeychainUnlock', 'has', [key]);
     },
-    delete: function(key,successCallback, errorCallback){
-        exec(successCallback, errorCallback, "TouchID", "delete", [key]);
-    },
-    setLocale: function(locale,successCallback, errorCallback){
-        exec(successCallback, errorCallback, "TouchID", "setLocale", [locale]);
-    },
-    move: function(key, packageName,successCallback, errorCallback){
-        exec(successCallback, errorCallback, "TouchID", "move", [key,packageName]);
-    },
-    password: function(message,packageName,successCallback, errorCallback){
-        exec(successCallback, errorCallback, "TouchID", "askPassword", [message,packageName]);
+    delete: function(key, success, error) {
+        exec(success, error, 'KeychainUnlock', 'delete', [key]);
     }
 };
 

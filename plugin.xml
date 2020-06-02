@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-keychain-unlock" version="1.0.0">
-  <name>Touch ID</name>
+  <name>KeychainUnlock</name>
   <description>
     A biometric with password, pin or pattern fallback keychain unlock for Apache Cordova thats runs on Android and iOS
   </description>
@@ -19,8 +19,8 @@
   <!-- ios -->
   <platform name="ios">
     <config-file target="config.xml" parent="/*">
-       <feature name="TouchID">
-         <param name="ios-package" value="TouchID"/>
+       <feature name="KeychainUnlock">
+         <param name="ios-package" value="KeychainUnlock"/>
        </feature>
     </config-file>
     <!-- Usage description of Face ID for iOS 11+ -->
@@ -30,24 +30,24 @@
     </config-file>
     <framework src="LocalAuthentication.framework" />
     <framework src="Security.framework" />
-    <header-file src="src/ios/TouchID.h"/>
-    <source-file src="src/ios/TouchID.m"/>
+    <header-file src="src/ios/KeychainUnlock.h"/>
+    <source-file src="src/ios/KeychainUnlock.m"/>
     <header-file src="src/ios/KeychainWrapper.h"/>
     <source-file src="src/ios/KeychainWrapper.m"/>
   </platform>
   <!-- android -->
   <platform name="android">
      <config-file target="res/xml/config.xml" parent="/*">
-        <feature name="TouchID" >
-           <param name="android-package" value="com.cordova.plugin.android.fingerprintauth.FingerprintAuth"/>
+        <feature name="KeychainUnlock" >
+           <param name="android-package" value="ar.com.tecnologica.KeychainUnlock.KeychainUnlock" />
         </feature>
      </config-file>
      <config-file target="AndroidManifest.xml" parent="/*">
         <uses-permission android:name="android.permission.USE_FINGERPRINT" />
      </config-file>
-     <source-file src="src/android/FingerprintAuth.java" target-dir="src/com/cordova/plugin/android/fingerprintauth" />
-     <source-file src="src/android/FingerprintAuthenticationDialogFragment.java" target-dir="src/com/cordova/plugin/android/fingerprintauth" />
-     <source-file src="src/android/FingerprintUiHelper.java" target-dir="src/com/cordova/plugin/android/fingerprintauth" />
+     <source-file src="src/android/KeychainUnlock.java" target-dir="src/ar/com/tecnologica/KeychainUnlock" />
+     <source-file src="src/android/KeychainUnlockAuthenticationDialogFragment.java" target-dir="src/ar/com/tecnologica/KeychainUnlock" />
+     <source-file src="src/android/KeychainUnlockUiHelper.java" target-dir="src/ar/com/tecnologica/KeychainUnlock" />
      <resource-file src="res/android/drawable/ic_fingerprint_error.xml" target="res/drawable/ic_fingerprint_error.xml" />
      <resource-file src="res/android/drawable/ic_fingerprint_success.xml" target="res/drawable/ic_fingerprint_success.xml" />
      <resource-file src="res/android/drawable-hdpi/ic_fp_40px.png" target="res/drawable-hdpi/ic_fp_40px.png" />
@@ -65,11 +65,6 @@
      <resource-file src="res/android/values-ru" target="res/values-ru" />
      <resource-file src="res/android/values-fr" target="res/values-fr" />
      <resource-file src="res/android/values-zh" target="res/values-zh" />
-     <resource-file src="res/android/values-zh-rCN" target="res/values-zh-rCN" />
-     <resource-file src="res/android/values-zh-rHK" target="res/values-zh-rHK" />
-     <resource-file src="res/android/values-zh-rMO" target="res/values-zh-rMO" />
-     <resource-file src="res/android/values-zh-rSG" target="res/values-zh-rSG" />
-     <resource-file src="res/android/values-zh-rTW" target="res/values-zh-rTW" />
      <resource-file src="res/android/values-no" target="res/values-no" />
      <resource-file src="res/android/values-pt" target="res/values-pt" />
      <resource-file src="res/android/values-ja" target="res/values-ja" />
@@ -77,5 +72,10 @@
      <resource-file src="res/android/values-th" target="res/values-th" />
      <resource-file src="res/android/values-ar" target="res/values-ar" />
      <resource-file src="res/android/values-ko" target="res/values-ko" />
+     <resource-file src="res/android/values-zh-rCN" target="res/values-zh-rCN" />
+     <resource-file src="res/android/values-zh-rHK" target="res/values-zh-rHK" />
+     <resource-file src="res/android/values-zh-rMO" target="res/values-zh-rMO" />
+     <resource-file src="res/android/values-zh-rSG" target="res/values-zh-rSG" />
+     <resource-file src="res/android/values-zh-rTW" target="res/values-zh-rTW" />
   </platform>
 </plugin>

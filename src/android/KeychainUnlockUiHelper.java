@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package com.cordova.plugin.android.fingerprintauth;
+package ar.com.tecnologica.KeychainUnlock;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -28,7 +28,7 @@ import android.widget.TextView;
  * Small helper class to manage text/icon around fingerprint authentication UI.
  */
 @TargetApi(23)
-public class FingerprintUiHelper extends FingerprintManager.AuthenticationCallback {
+public class KeychainUnlockUiHelper extends FingerprintManager.AuthenticationCallback {
 
     static final long ERROR_TIMEOUT_MILLIS = 1600;
     static final long SUCCESS_DELAY_MILLIS = 1300;
@@ -39,33 +39,35 @@ public class FingerprintUiHelper extends FingerprintManager.AuthenticationCallba
     private final TextView mErrorTextView;
     private final Callback mCallback;
     private CancellationSignal mCancellationSignal;
+    private int mAttempts = 0;
+    private static FingerprintManager.AuthenticationResult fingerprintResult;
 
     boolean mSelfCancelled;
 
     /**
-     * Builder class for {@link FingerprintUiHelper} in which injected fields from Dagger
+     * Builder class for {@link KeychainUnlockUiHelper} in which injected fields from Dagger
      * holds its fields and takes other arguments in the {@link #build} method.
      */
-    public static class FingerprintUiHelperBuilder {
+    public static class KeychainUnlockUiHelperBuilder {
         private final FingerprintManager mFingerPrintManager;
         private final Context mContext;
 
-        public FingerprintUiHelperBuilder(Context context, FingerprintManager fingerprintManager) {
+        public KeychainUnlockUiHelperBuilder(Context context, FingerprintManager fingerprintManager) {
             mFingerPrintManager = fingerprintManager;
             mContext = context;
         }
 
-        public FingerprintUiHelper build(ImageView icon, TextView errorTextView, Callback callback) {
-            return new FingerprintUiHelper(mContext, mFingerPrintManager, icon, errorTextView,
+        public KeychainUnlockUiHelper build(ImageView icon, TextView errorTextView, Callback callback) {
+            return new KeychainUnlockUiHelper(mContext, mFingerPrintManager, icon, errorTextView,
                     callback);
         }
     }
 
     /**
-     * Constructor for {@link FingerprintUiHelper}. This method is expected to be called from
-     * only the {@link FingerprintUiHelperBuilder} class.
+     * Constructor for {@link KeychainUnlockUiHelper}. This method is expected to be called from
+     * only the {@link KeychainUnlockUiHelperBuilder} class.
      */
-    private FingerprintUiHelper(Context context, FingerprintManager fingerprintManager,
+    private KeychainUnlockUiHelper(Context context, FingerprintManager fingerprintManager,
             ImageView icon, TextView errorTextView, Callback callback) {
         mFingerprintManager = fingerprintManager;
         mIcon = icon;
@@ -74,13 +76,13 @@ public class FingerprintUiHelper extends FingerprintManager.AuthenticationCallba
         mContext = context;
     }
 
-    public boolean isFingerprintAuthAvailable() {
+    public boolean isKeychainUnlockAvailable() {
         return mFingerprintManager.isHardwareDetected()
                 && mFingerprintManager.hasEnrolledFingerprints();
     }
 
     public void startListening(FingerprintManager.CryptoObject cryptoObject) {
-        if (!isFingerprintAuthAvailable()) {
+        if (!isKeychainUnlockAvailable()) {
             return;
         }
         mCancellationSignal = new CancellationSignal();
@@ -89,7 +91,7 @@ public class FingerprintUiHelper extends FingerprintManager.AuthenticationCallba
                 .authenticate(cryptoObject, mCancellationSignal, 0 /* flags */, this, null);
 
         int ic_fp_40px_id = mContext.getResources()
-                .getIdentifier("ic_fp_40px", "drawable", FingerprintAuth.packageName);
+                .getIdentifier("ic_fp_40px", "drawable", KeychainUnlock.packageName);
         mIcon.setImageResource(ic_fp_40px_id);
     }
 
@@ -102,13 +104,13 @@ public class FingerprintUiHelper extends FingerprintManager.AuthenticationCallba
     }
 
     @Override
-    public void onAuthenticationError(int errMsgId, CharSequence errString) {
+    public void onAuthenticationError(int errMsgId, final CharSequence errString) {
         if (!mSelfCancelled) {
             showError(errString);
             mIcon.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    mCallback.onError();
+                    mCallback.onError(errString);
                 }
             }, ERROR_TIMEOUT_MILLIS);
         }
@@ -121,41 +123,59 @@ public class FingerprintUiHelper extends FingerprintManager.AuthenticationCallba
 
     @Override
     public void onAuthenticationFailed() {
+        mAttempts++;
         int fingerprint_not_recognized_id = mContext.getResources()
-                .getIdentifier("fingerprint_not_recognized", "string", FingerprintAuth.packageName);
-        showError(mIcon.getResources().getString(
-                fingerprint_not_recognized_id));
+                .getIdentifier("fingerprint_not_recognized", "string",
+                        KeychainUnlock.packageName);
+        int fingerprint_too_many_attempts_id = mContext.getResources()
+                .getIdentifier("fingerprint_too_many_attempts", "string",
+                        KeychainUnlock.packageName);
+        final String too_many_attempts_string = mIcon.getResources().getString(
+                fingerprint_too_many_attempts_id);
+        if (mAttempts > KeychainUnlock.mMaxAttempts) {
+            showError(too_many_attempts_string);
+            mIcon.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mCallback.onError(too_many_attempts_string);
+                }
+            }, ERROR_TIMEOUT_MILLIS);
+        } else {
+            showError(mIcon.getResources().getString(
+                    fingerprint_not_recognized_id));
+        }
     }
 
     @Override
     public void onAuthenticationSucceeded(FingerprintManager.AuthenticationResult result) {
+        fingerprintResult = result;
         mErrorTextView.removeCallbacks(mResetErrorTextRunnable);
         int ic_fingerprint_success_id = mContext.getResources()
-                .getIdentifier("ic_fingerprint_success", "drawable", FingerprintAuth.packageName);
+                .getIdentifier("ic_fingerprint_success", "drawable", KeychainUnlock.packageName);
         mIcon.setImageResource(ic_fingerprint_success_id);
         int success_color_id = mContext.getResources()
-                .getIdentifier("kc_success_color", "color", FingerprintAuth.packageName);
+                .getIdentifier("success_color", "color", KeychainUnlock.packageName);
         mErrorTextView.setTextColor(
                 mErrorTextView.getResources().getColor(success_color_id, null));
         int fingerprint_success_id = mContext.getResources()
-                .getIdentifier("fingerprint_success", "string", FingerprintAuth.packageName);
+                .getIdentifier("fingerprint_success", "string", KeychainUnlock.packageName);
         mErrorTextView.setText(
                 mErrorTextView.getResources().getString(fingerprint_success_id));
         mIcon.postDelayed(new Runnable() {
             @Override
             public void run() {
-                mCallback.onAuthenticated();
+                mCallback.onAuthenticated(fingerprintResult);
             }
         }, SUCCESS_DELAY_MILLIS);
     }
 
     private void showError(CharSequence error) {
         int ic_fingerprint_error_id = mContext.getResources()
-                .getIdentifier("ic_fingerprint_error", "drawable", FingerprintAuth.packageName);
+                .getIdentifier("ic_fingerprint_error", "drawable", KeychainUnlock.packageName);
         mIcon.setImageResource(ic_fingerprint_error_id);
         mErrorTextView.setText(error);
         int warning_color_id = mContext.getResources()
-                .getIdentifier("kc_warning_color", "color", FingerprintAuth.packageName);
+                .getIdentifier("warning_color", "color", KeychainUnlock.packageName);
         mErrorTextView.setTextColor(
                 mErrorTextView.getResources().getColor(warning_color_id, null));
         mErrorTextView.removeCallbacks(mResetErrorTextRunnable);
@@ -166,23 +186,23 @@ public class FingerprintUiHelper extends FingerprintManager.AuthenticationCallba
         @Override
         public void run() {
             int hint_color_id = mContext.getResources()
-                    .getIdentifier("kc_hint_color", "color", FingerprintAuth.packageName);
+                    .getIdentifier("hint_color", "color", KeychainUnlock.packageName);
             mErrorTextView.setTextColor(
                     mErrorTextView.getResources().getColor(hint_color_id, null));
             int fingerprint_hint_id = mContext.getResources()
-                    .getIdentifier("fingerprint_hint", "string", FingerprintAuth.packageName);
+                    .getIdentifier("fingerprint_hint", "string", KeychainUnlock.packageName);
             mErrorTextView.setText(
                     mErrorTextView.getResources().getString(fingerprint_hint_id));
             int ic_fp_40px_id = mContext.getResources()
-                    .getIdentifier("ic_fp_40px", "drawable", FingerprintAuth.packageName);
+                    .getIdentifier("ic_fp_40px", "drawable", KeychainUnlock.packageName);
             mIcon.setImageResource(ic_fp_40px_id);
         }
     };
 
     public interface Callback {
 
-        void onAuthenticated();
+        void onAuthenticated(FingerprintManager.AuthenticationResult result);
 
-        void onError();
+        void onError(CharSequence errString);
     }
 }
