@@ -58,7 +58,14 @@ import java.io.UnsupportedEncodingException;
 @TargetApi(23)
 public class KeychainUnlock extends CordovaPlugin {
     public static final String TAG = "KeychainUnlock";
+    //public static final String KEYSTORE_PROVIDER_1 = "AndroidKeyStore";
+    //public static final String KEYSTORE_PROVIDER_2 = "AndroidKeyStoreBCWorkaround";
+    //public static final String KEYSTORE_PROVIDER_3 = "AndroidOpenSSL";
+    //public static final String RSA_ALGORITHM = "RSA/ECB/PKCS1Padding";
+    //public static final String TAG = "SecureKeyStore";
+    //public static final String SKS_FILENAME = "SKS_KEY_FILE";
     public static String packageName;
+    //public static CordovaInterface mCordova;
     public static Context mContext;
     public static Activity mActivity;
     public static KeyStore mKeyStore;
@@ -66,7 +73,6 @@ public class KeychainUnlock extends CordovaPlugin {
     public static Cipher mCipher;
     public static CallbackContext mCallbackContext;
     public static PluginResult mPluginResult;
-    public static boolean mDisableBackup = false;
     public static int mMaxAttempts = 6;  // one more than the device default to prevent a 2nd callback
     public static String mDialogTitle;
     public static String mDialogMessage;
@@ -90,14 +96,7 @@ public class KeychainUnlock extends CordovaPlugin {
     private static final String CREDENTIAL_DELIMITER = "|:|";
     private static final String SHARED_PREFS_NAME = "KeychainUnlockPreferences";
     private static String mKeyID;
-    private static String mClientId;
-    private static String mUsername = "";
-    private static String mClientSecret;
-    private static boolean mCipherModeCrypt = true;
-    private static boolean mUserAuthRequired = false;
-    private String mLangCode = "en_US";
     private String mToEncrypt;
-    private int mCurrentMode;
     private FingerprintManager mFingerPrintManager;
 
     public enum PluginError {
@@ -122,9 +121,6 @@ public class KeychainUnlock extends CordovaPlugin {
         FRAGMENT_NOT_EXIST
     }
 
-    /**
-     * Constructor.
-     */
     public KeychainUnlock() {
     }
 
@@ -140,6 +136,7 @@ public class KeychainUnlock extends CordovaPlugin {
         Log.v(TAG, "Init KeychainUnlock");
 
         packageName = cordova.getActivity().getApplicationContext().getPackageName();
+        //mCordova = cordova;
         mPluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
         mActivity = cordova.getActivity();
         mContext = cordova.getActivity().getApplicationContext();
@@ -194,8 +191,7 @@ public class KeychainUnlock extends CordovaPlugin {
 
         if (action.equals(AVAILABLE)) {
                     if (!cordova.hasPermission(Manifest.permission.USE_FINGERPRINT)) {
-                        cordova.requestPermission(this, PERMISSIONS_REQUEST_FINGERPRINT,
-                                Manifest.permission.USE_FINGERPRINT);
+                        cordova.requestPermission(this, PERMISSIONS_REQUEST_FINGERPRINT, Manifest.permission.USE_FINGERPRINT);
                     } else {
                         sendAvailabilityResult();
                     }
@@ -217,12 +213,12 @@ public class KeychainUnlock extends CordovaPlugin {
         } else if (action.equals(SAVE)) {
                      final String key = args.getString(0);
                      final String password = args.getString(1);
-                     boolean setUserAuthenticationRequired = false; // args.get(2).equals(null) || args.getBoolean(2);
+                     //boolean setUserAuthenticationRequired = false; // args.get(2).equals(null) || args.getBoolean(2);
                      SecretKey secretKey = getSecretKey();
     
                     if (secretKey == null) {
-                        if (createKey(setUserAuthenticationRequired)) {
-                            getSecretKey();
+                        if (createKey(false)) {
+                            secretKey = getSecretKey();
                         }
                     }
                     mKeyID = key;
@@ -255,12 +251,15 @@ public class KeychainUnlock extends CordovaPlugin {
 
                     SecretKey secretKey = getSecretKey();
                     if (secretKey == null) {
-                        if (createKey(true)) {
+                        if (createKey(false)) {
                             secretKey = getSecretKey();
                         }
                     }
 
+                    mKeyID = key;
+
                     if (secretKey == null) {
+                        mPluginResult = new PluginResult(PluginResult.Status.ERROR, "No Secret Key.");
                         mCallbackContext.sendPluginResult(mPluginResult);
                     } else {
                             if (isKeychainUnlockAvailable()) {
@@ -269,43 +268,34 @@ public class KeychainUnlock extends CordovaPlugin {
                                         // Set up the crypto object for later. The object will be authenticated by use
                                         // of the fingerprint.
                                         mFragment = new KeychainUnlockAuthenticationDialogFragment();
-                                        if (initCipher(Cipher.ENCRYPT_MODE, cordova)) {
+                                        //mFragment.setCryptoObject(new FingerprintManager.CryptoObject(mCipher));
+                                        if (initCipher(Cipher.DECRYPT_MODE, cordova)) {
                                             mFragment.setCancelable(false);
                                             // Show the fingerprint dialog. The user has the option to use the fingerprint with
                                             // crypto, or you can fall back to using a server-side verified password.
                                             mFragment.setCryptoObject(new FingerprintManager.CryptoObject(mCipher));
-                                            FragmentTransaction transaction = cordova.getActivity().getFragmentManager().beginTransaction();
-                                            transaction.add(mFragment, DIALOG_FRAGMENT_TAG);
-                                            transaction.commitAllowingStateLoss();
                                         } else {
-                                            if (!mDisableBackup) {
-                                                // This happens if the lock screen has been disabled or or a fingerprint got
-                                                // enrolled. Thus show the dialog to authenticate with their password
-                                                mFragment.setCryptoObject(new FingerprintManager.CryptoObject(mCipher));
-                                                mFragment.setStage(KeychainUnlockAuthenticationDialogFragment.Stage.NEW_FINGERPRINT_ENROLLED);
-                                                FragmentTransaction transaction = cordova.getActivity().getFragmentManager().beginTransaction();
-                                                transaction.add(mFragment, DIALOG_FRAGMENT_TAG);
-                                                transaction.commitAllowingStateLoss();
-                                            } else {
-                                                Log.e(TAG, "Failed to init Cipher and backup disabled.");
-                                                mCallbackContext.error(PluginError.INIT_CIPHER_FAILED.name());
-                                                mPluginResult = new PluginResult(PluginResult.Status.ERROR);
-                                                mCallbackContext.sendPluginResult(mPluginResult);
-                                            }
+                                            // This happens if the lock screen has been disabled or a fingerprint not
+                                            // enrolled. Thus show the dialog to authenticate with their password
+                                            mFragment.setCryptoObject(new FingerprintManager.CryptoObject(mCipher));
+                                            mFragment.setStage(KeychainUnlockAuthenticationDialogFragment.Stage.NEW_FINGERPRINT_ENROLLED);
                                         }
+                                        FragmentTransaction transaction = cordova.getActivity().getFragmentManager().beginTransaction();
+                                        transaction.add(mFragment, DIALOG_FRAGMENT_TAG);
+                                        transaction.commitAllowingStateLoss();
                                     }
                                 });
                                 mPluginResult.setKeepCallback(true);
                             } else {
-                                Log.v(TAG, "useBackupLockScreen: true");
-                                //if (useBackupLockScreen()) {
+                                Log.v(TAG, "No FingerPrint Reader, using fallback method");
                                 if (true) {
-                                   showAuthenticationScreen();
+                                   if (initCipher(Cipher.DECRYPT_MODE, cordova)) {
+                                        showAuthenticationScreen();
+                                   }
                                 } else {
                                    // XXX ERROR
                                 }
                             }
-                        //}
                     }
              return true;
         } else if (action.equals(DELETE)) {
@@ -369,12 +359,8 @@ public class KeychainUnlock extends CordovaPlugin {
             case PERMISSIONS_REQUEST_FINGERPRINT: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
                     sendAvailabilityResult();
                 } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
                     Log.e(TAG, "KeychainUnlock permission denied.");
                     setPluginResultError(PluginError.FINGERPRINT_PERMISSION_DENIED.name());
                 }
@@ -397,17 +383,21 @@ public class KeychainUnlock extends CordovaPlugin {
         String initCipherExceptionErrorPrefix = "Failed to init Cipher: ";
         try {
             SecretKey key = getSecretKey();
+            if (key == null) {
+                if (createKey(false)) {
+                    key = getSecretKey();
+                }
+            }
 
             if (mode == Cipher.ENCRYPT_MODE) {
                 SecureRandom r = new SecureRandom();
                 byte[] ivBytes = new byte[16];
                 r.nextBytes(ivBytes);
-
                 mCipher.init(mode, key);
             } else {
                 SharedPreferences sharedPref = cordova.getActivity().getApplicationContext().getSharedPreferences(SHARED_PREFS_NAME,Context.MODE_PRIVATE);
-                byte[] ivBytes = Base64.decode(sharedPref.getString("fing_iv" + mKeyID, ""), Base64.DEFAULT);
-
+                //byte[] ivBytes = Base64.decode(sharedPref.getString("fing_iv" + mKeyID, ""), Base64.DEFAULT);
+                byte[] ivBytes = Base64.decode(sharedPref.getString("fing_iv" + mKeyID, ""), Base64.NO_WRAP);
                 mCipher.init(mode, key, new IvParameterSpec(ivBytes));
             }
             initCipher = true;
@@ -529,6 +519,60 @@ public class KeychainUnlock extends CordovaPlugin {
         return isKeyCreated;
     }
 
+    public static void onAuthenticated() {
+        String result = "";
+        String errorMessage = "";
+
+        //if (!initCipher(Cipher.DECRYPT_MODE, mCordova)) {
+        //    mPluginResult = new PluginResult(PluginResult.Status.ERROR, "No se pudo inicializar el cifrador");
+        //    mPluginResult.setKeepCallback(false);
+        //    mCallbackContext.sendPluginResult(mPluginResult);
+        //    return;
+        //}
+
+        try {
+            //CordovaInterface cordova = mParentCordovaPlugin.cordova; // XXX
+            //if (withFingerprint) {
+                // If the user has authenticated with fingerprint, verify that using cryptography and
+                // then return the encrypted token
+                //SharedPreferences sharedPref = mCordova.getActivity().getApplicationContext().getSharedPreferences(SHARED_PREFS_NAME,Context.MODE_PRIVATE);
+                SharedPreferences sharedPref = mContext.getSharedPreferences(SHARED_PREFS_NAME,Context.MODE_PRIVATE);
+                //if (mCurrentMode == Cipher.DECRYPT_MODE) {
+                    byte[] enc = Base64.decode(sharedPref.getString("fing" + mKeyID, ""), Base64.DEFAULT);
+                    byte[] decrypted = mCipher.doFinal(enc);
+                    result = new String(decrypted);
+                //} else if (mCurrentMode == Cipher.ENCRYPT_MODE && setUserAuthenticationRequired) {
+                    //If setUserAuthenticationRequired encript string with key after authenticate with fingerprint
+                    //SharedPreferences.Editor editor = sharedPref.edit();
+                    //byte[] enc = mCipher.doFinal(mToEncrypt.getBytes());
+                    //editor.putString("fing" + mKeyID, Base64.encodeToString(enc, Base64.DEFAULT));
+                    //editor.putString("fing_iv" + mKeyID, Base64.encodeToString(mCipher.getIV(), Base64.DEFAULT));
+                    //editor.commit();
+                    //mToEncrypt = "";
+                    //result = "success";
+                //}
+            //}
+        } catch (BadPaddingException e) {
+            errorMessage = "Failed to encrypt the data with the generated key: BadPaddingException: " + e.getMessage();
+            Log.e(TAG, errorMessage);
+        } catch (IllegalBlockSizeException e) {
+            errorMessage = "Failed to encrypt the data with the generated key: IllegalBlockSizeException: " + e.getMessage();
+            Log.e(TAG, errorMessage);
+        } catch (IllegalStateException e) {
+            errorMessage = "Failed to decrypt the data with the generated key: IllegalStateException: " + e.getMessage();
+        }
+
+        if (!result.equals("")) {
+            mPluginResult = new PluginResult(PluginResult.Status.OK, result);
+            mPluginResult.setKeepCallback(false);
+        } else {
+            mPluginResult = new PluginResult(PluginResult.Status.ERROR, errorMessage);
+            mPluginResult.setKeepCallback(false);
+        }
+        mCallbackContext.sendPluginResult(mPluginResult);
+    }
+
+    /*
     public static void onAuthenticated(boolean withKeychainUnlock, FingerprintManager.AuthenticationResult result) {
         JSONObject resultJson = new JSONObject();
         String errorMessage = "";
@@ -545,7 +589,6 @@ public class KeychainUnlock extends CordovaPlugin {
                 resultJson.put("withBackup", true);
 
                 // If failed to init cipher because of InvalidKeyException, create new key
-                /*
                 if (!initCipher()) {
                     createKey(true);
                 }
@@ -553,7 +596,6 @@ public class KeychainUnlock extends CordovaPlugin {
                 if (initCipher()) {
                     cryptoObject = new FingerprintManager.CryptoObject(mCipher);
                 }
-                */
             }
 
             if (cryptoObject == null) {
@@ -564,8 +606,7 @@ public class KeychainUnlock extends CordovaPlugin {
                     String encodedBytes = Base64.encodeToString(bytes, Base64.NO_WRAP);
                     resultJson.put("token", encodedBytes);
                 } else {
-                    bytes = cryptoObject.getCipher()
-                            .doFinal(Base64.decode(mClientSecret, Base64.NO_WRAP));
+                    bytes = cryptoObject.getCipher().doFinal(Base64.decode(mClientSecret, Base64.NO_WRAP));
                     String credentialString = new String(bytes, "UTF-8");
                     Pattern pattern = Pattern.compile(Pattern.quote(CREDENTIAL_DELIMITER));
                     String[] credentialArray = pattern.split(credentialString);
@@ -610,6 +651,7 @@ public class KeychainUnlock extends CordovaPlugin {
         }
         mCallbackContext.sendPluginResult(mPluginResult);
     }
+    */
 
     public static void onCancelled() {
         mCallbackContext.error(PluginError.FINGERPRINT_CANCELLED.name());
@@ -703,7 +745,8 @@ public class KeychainUnlock extends CordovaPlugin {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS) {
             if (resultCode == cordova.getActivity().RESULT_OK) {
-              onAuthenticated(false, null);
+              //onAuthenticated(false, null);
+              onAuthenticated();
             } else {
               onCancelled();
             }

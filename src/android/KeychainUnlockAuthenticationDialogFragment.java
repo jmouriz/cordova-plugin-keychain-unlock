@@ -213,7 +213,8 @@ public class KeychainUnlockAuthenticationDialogFragment extends DialogFragment i
         if (requestCode == REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS) {
             // Challenge completed, proceed with using cipher
             if (resultCode == getActivity().RESULT_OK) {
-                KeychainUnlock.onAuthenticated(false /* used backup */, null);
+                //KeychainUnlock.onAuthenticated(false /* used backup */, null);
+                KeychainUnlock.onAuthenticated();
             } else {
                 // The user canceled or didn’t complete the lock screen
                 // operation. Go to error/cancellation flow.
@@ -224,10 +225,12 @@ public class KeychainUnlockAuthenticationDialogFragment extends DialogFragment i
     }
 
     @Override
-    public void onAuthenticated(FingerprintManager.AuthenticationResult result) {
+    //public void onAuthenticated(FingerprintManager.AuthenticationResult result) {
+    public void onAuthenticated() {
         // Callback from KeychainUnlockUiHelper. Let the activity know that authentication was
         // successful.
-        KeychainUnlock.onAuthenticated(true /* withKeychainUnlock */, result);
+        //KeychainUnlock.onAuthenticated(true /* withKeychainUnlock */, result);
+        KeychainUnlock.onAuthenticated();
         dismissAllowingStateLoss();
     }
 

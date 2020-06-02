@@ -124,14 +124,9 @@ public class KeychainUnlockUiHelper extends FingerprintManager.AuthenticationCal
     @Override
     public void onAuthenticationFailed() {
         mAttempts++;
-        int fingerprint_not_recognized_id = mContext.getResources()
-                .getIdentifier("fingerprint_not_recognized", "string",
-                        KeychainUnlock.packageName);
-        int fingerprint_too_many_attempts_id = mContext.getResources()
-                .getIdentifier("fingerprint_too_many_attempts", "string",
-                        KeychainUnlock.packageName);
-        final String too_many_attempts_string = mIcon.getResources().getString(
-                fingerprint_too_many_attempts_id);
+        int fingerprint_not_recognized_id = mContext.getResources().getIdentifier("fingerprint_not_recognized", "string", KeychainUnlock.packageName);
+        int fingerprint_too_many_attempts_id = mContext.getResources().getIdentifier("fingerprint_too_many_attempts", "string", KeychainUnlock.packageName);
+        final String too_many_attempts_string = mIcon.getResources().getString(fingerprint_too_many_attempts_id);
         if (mAttempts > KeychainUnlock.mMaxAttempts) {
             showError(too_many_attempts_string);
             mIcon.postDelayed(new Runnable() {
@@ -141,8 +136,7 @@ public class KeychainUnlockUiHelper extends FingerprintManager.AuthenticationCal
                 }
             }, ERROR_TIMEOUT_MILLIS);
         } else {
-            showError(mIcon.getResources().getString(
-                    fingerprint_not_recognized_id));
+            showError(mIcon.getResources().getString(fingerprint_not_recognized_id));
         }
     }
 
@@ -150,34 +144,27 @@ public class KeychainUnlockUiHelper extends FingerprintManager.AuthenticationCal
     public void onAuthenticationSucceeded(FingerprintManager.AuthenticationResult result) {
         fingerprintResult = result;
         mErrorTextView.removeCallbacks(mResetErrorTextRunnable);
-        int ic_fingerprint_success_id = mContext.getResources()
-                .getIdentifier("ic_fingerprint_success", "drawable", KeychainUnlock.packageName);
+        int ic_fingerprint_success_id = mContext.getResources().getIdentifier("ic_fingerprint_success", "drawable", KeychainUnlock.packageName);
         mIcon.setImageResource(ic_fingerprint_success_id);
-        int success_color_id = mContext.getResources()
-                .getIdentifier("success_color", "color", KeychainUnlock.packageName);
-        mErrorTextView.setTextColor(
-                mErrorTextView.getResources().getColor(success_color_id, null));
-        int fingerprint_success_id = mContext.getResources()
-                .getIdentifier("fingerprint_success", "string", KeychainUnlock.packageName);
-        mErrorTextView.setText(
-                mErrorTextView.getResources().getString(fingerprint_success_id));
+        int success_color_id = mContext.getResources().getIdentifier("success_color", "color", KeychainUnlock.packageName);
+        mErrorTextView.setTextColor(mErrorTextView.getResources().getColor(success_color_id, null));
+        int fingerprint_success_id = mContext.getResources().getIdentifier("fingerprint_success", "string", KeychainUnlock.packageName);
+        mErrorTextView.setText(mErrorTextView.getResources().getString(fingerprint_success_id));
         mIcon.postDelayed(new Runnable() {
             @Override
             public void run() {
-                mCallback.onAuthenticated(fingerprintResult);
+                //mCallback.onAuthenticated(fingerprintResult);
+                mCallback.onAuthenticated();
             }
         }, SUCCESS_DELAY_MILLIS);
     }
 
     private void showError(CharSequence error) {
-        int ic_fingerprint_error_id = mContext.getResources()
-                .getIdentifier("ic_fingerprint_error", "drawable", KeychainUnlock.packageName);
+        int ic_fingerprint_error_id = mContext.getResources().getIdentifier("ic_fingerprint_error", "drawable", KeychainUnlock.packageName);
         mIcon.setImageResource(ic_fingerprint_error_id);
         mErrorTextView.setText(error);
-        int warning_color_id = mContext.getResources()
-                .getIdentifier("warning_color", "color", KeychainUnlock.packageName);
-        mErrorTextView.setTextColor(
-                mErrorTextView.getResources().getColor(warning_color_id, null));
+        int warning_color_id = mContext.getResources().getIdentifier("warning_color", "color", KeychainUnlock.packageName);
+        mErrorTextView.setTextColor(mErrorTextView.getResources().getColor(warning_color_id, null));
         mErrorTextView.removeCallbacks(mResetErrorTextRunnable);
         mErrorTextView.postDelayed(mResetErrorTextRunnable, ERROR_TIMEOUT_MILLIS);
     }
@@ -185,24 +172,18 @@ public class KeychainUnlockUiHelper extends FingerprintManager.AuthenticationCal
     Runnable mResetErrorTextRunnable = new Runnable() {
         @Override
         public void run() {
-            int hint_color_id = mContext.getResources()
-                    .getIdentifier("hint_color", "color", KeychainUnlock.packageName);
-            mErrorTextView.setTextColor(
-                    mErrorTextView.getResources().getColor(hint_color_id, null));
-            int fingerprint_hint_id = mContext.getResources()
-                    .getIdentifier("fingerprint_hint", "string", KeychainUnlock.packageName);
-            mErrorTextView.setText(
-                    mErrorTextView.getResources().getString(fingerprint_hint_id));
-            int ic_fp_40px_id = mContext.getResources()
-                    .getIdentifier("ic_fp_40px", "drawable", KeychainUnlock.packageName);
+            int hint_color_id = mContext.getResources().getIdentifier("hint_color", "color", KeychainUnlock.packageName);
+            mErrorTextView.setTextColor(mErrorTextView.getResources().getColor(hint_color_id, null));
+            int fingerprint_hint_id = mContext.getResources().getIdentifier("fingerprint_hint", "string", KeychainUnlock.packageName);
+            mErrorTextView.setText(mErrorTextView.getResources().getString(fingerprint_hint_id));
+            int ic_fp_40px_id = mContext.getResources().getIdentifier("ic_fp_40px", "drawable", KeychainUnlock.packageName);
             mIcon.setImageResource(ic_fp_40px_id);
         }
     };
 
     public interface Callback {
-
-        void onAuthenticated(FingerprintManager.AuthenticationResult result);
-
+        //void onAuthenticated(FingerprintManager.AuthenticationResult result);
+        void onAuthenticated();
         void onError(CharSequence errString);
     }
 }
